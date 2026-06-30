@@ -184,8 +184,8 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
             "Closing the session must trigger the sign-missed cron",
         )
 
-    def test_cron_skips_open_session(self):
-        """The cron skips POS with a session in opened state."""
+    def test_cron_signs_open_session(self):
+        """The cron signs missed orders even with a session in opened state."""
         self._create_signed_start_order()
         cancelled = self._create_cancelled_order(2, 39.9)
 
@@ -193,11 +193,6 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
         self.assertEqual(self.pos_session.state, "opened")
 
         with self._mock_sign():
-            self.pos_config._cron_asign_sign_missed()
-        self.assertEqual(cancelled.asign_state, "u", "POS in use must be skipped")
-
-        with self._mock_sign():
-            self.pos_session.close_session_from_ui()
             self.pos_config._cron_asign_sign_missed()
 
         self.assertEqual(cancelled.asign_state, "s")

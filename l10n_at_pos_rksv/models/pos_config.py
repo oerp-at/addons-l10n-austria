@@ -366,11 +366,14 @@ class PosConfig(models.Model):
         amounts, so only the name is restored from the sequence number.
         """
         self.ensure_one()
-        orders = self.env["pos.order"].search(
+
+        # check for cancelled orders with valid sequence
+        PosOrder = self.env["pos.order"]
+        orders = PosOrder.search(
             [
                 ("config_id", "=", self.id),
                 ("state", "=", "cancel"),
-                ("asign_state", "=", "s"),
+                ("sequence_number", ">", 0),
                 ("name", "=", "/"),
             ]
         )
@@ -381,6 +384,64 @@ class PosConfig(models.Model):
                 order.name,
                 self.name,
             )
+
+
+        # check for cancelled orders which produces gaps in the sequence
+        last_signed = PosOrder.search(
+                [
+                    ("config_id", "=", self.id),
+                    ("asign_state", "=", "s"),
+                ],
+                order="asign_seq desc",
+                limit=1,
+            )
+
+        # check for gap orders
+        gap_orders = self.env["pos.order"].search(
+            [
+                ("config_id", "=", self.id),
+                ("state", "=", "cancel"),
+                ("sequence_number", "=", 0),
+                ("pos_reference", "!=", False),
+                ("name", "=", "/"),
+                ("pos_reference", ">", last_signed.pos_reference),
+            ]
+        )
+        if gap_orders and last_signed:
+            orders = PosOrder.search(
+                [
+                    ("config_id", "=", self.id),
+                    ("pos_reference", ">=", last_signed.pos_reference),
+                ],
+                order="pos_reference asc",
+            )
+            sequence_numbers = set([order.sequence_number for order in orders if order.sequence_number])
+            for prev_order, order, next_order in zip(orders, orders[1:], orders[2:]):
+                if order not in gap_orders:
+                    continue
+                if not prev_order.sequence_number or not next_order.sequence_number:
+                    continue
+
+                # check if the sequence is already taken
+                missing_seq = prev_order.sequence_number + 1
+                if missing_seq in sequence_numbers:
+                    continue
+
+                # assign the sequence number
+                order.write(
+                    {
+                        "sequence_number": missing_seq,
+                        "asign_seq": missing_seq,
+                    }
+                )
+                sequence_numbers.add(missing_seq)
+
+                _logger.warning(
+                    "**RKSV** restored sequence %s of cancelled"
+                    " gap order for POS %s",
+                    missing_seq,
+                    self.name,
+                )
 
     def _asign_sign_missed(self):
         """Sign orders that were created but not signed yet."""
@@ -438,15 +499,6 @@ class PosConfig(models.Model):
                     ("asign_state", "in", ["assigned", "active"]),
                 ]
             )
-        # only process POS that are not actively selling; signing missed
-        # orders of a POS in use is handled by its own payment flow
-        open_sessions = self.env["pos.session"].search(
-            [
-                ("config_id", "in", configs.ids),
-                ("state", "=", "opened"),
-            ]
-        )
-        configs -= open_sessions.config_id
         for config in configs:
             _logger.info("**RKSV** Check missed orders for POS %s", config.name)
             config._asign_sign_missed()

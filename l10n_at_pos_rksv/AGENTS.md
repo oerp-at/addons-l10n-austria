@@ -39,9 +39,12 @@
   the RKSV (`asign_type` `s` for the very first one, `0` afterwards).
 - `pos.config._asign_repair_cancelled_names()` – restores names of signed orders that
   were overwritten with `cancel`/`'/'`; runs idempotently inside `_asign_sign_missed`.
+  Also recovers `sequence_number`/`asign_seq` lost via concurrent cancel on gap orders
+  (cancelled with `sequence_number=0` after the last signed order), by continuing the
+  receipt range from the last signed receipt.
 - Cron `pos_config_ir_cron` – daily run of `_cron_asign_sign_missed`; also signs
-  cancelled orders as zeroed receipts to keep the receipt range gapless. Skips POS with
-  a session in `opened` state; additionally triggered asynchronously by
+  cancelled orders as zeroed receipts to keep the receipt range gapless. Processes all
+  matching POS regardless of session state; additionally triggered asynchronously by
   `pos.session.action_pos_session_close()`.
 
 ## Views & Menus
