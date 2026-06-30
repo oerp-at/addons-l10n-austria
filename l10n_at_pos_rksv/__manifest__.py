@@ -9,7 +9,7 @@
     ),
     "website": "https://github.com/OCA/l10n-austria",
     "category": "Localization/Austria",
-    "version": "19.0.1.4.5",
+    "version": "19.0.1.5.0",
     "license": "LGPL-3",
     "depends": [
         "l10n_at",
