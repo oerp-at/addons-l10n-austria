@@ -14,6 +14,16 @@
                     <b>The receipt could not be signed and is therefore not valid!</b>
                 </t>
                 <t t-elif="order.asign_state == 's'">
+                    <div
+                        class="pos-receipt-amount"
+                        t-if="order.name and order.name != '/'"
+                    >
+                        <span>Receipt No.</span>
+                        <span
+                            class="pos-receipt-right-align"
+                            t-esc="order.name"
+                        />
+                    </div>
                     <br />
                     <br />
                     <img

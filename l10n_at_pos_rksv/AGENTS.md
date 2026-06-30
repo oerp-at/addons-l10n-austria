@@ -49,15 +49,17 @@
 - `pos.config._asign_repair_signed_names()` – restores names of already signed receipts
   whose name was reset to `'/'` by a concurrent cancel (lost-update race); the signature
   stays valid, only the name is recomputed from `asign_seq`. Runs inside `_asign_sign_missed`.
-- Cron `pos_config_ir_cron` – daily run of `_cron_asign_sign_missed`; also signs
-  cancelled orders as zeroed receipts to keep the receipt range gapless. Processes all
-  matching POS regardless of session state; additionally triggered asynchronously by
+- Cron `pos_config_ir_cron` – daily run of `_cron_asign_sign_missed`; back-fills unsigned
+  paid/done receipts (cancelled orders are skipped). Processes all matching POS regardless
+  of session state; additionally triggered asynchronously by
   `pos.session.action_pos_session_close()`.
 
 ## Views & Menus
 
 - POS settings inherit (`res_config_settings_views.xml`) – RKSV section.
 - POS list/form inherits (`pos_order_views.xml`) – RKSV signature fields.
+- POS receipt inherit (`static/src/overrides/order_receipt.xml`) – prints the RKSV receipt
+  number (`order.name`), the QR code, serial and STARTBELEG/NULLBELEG/STORNO markers.
 - POS configuration form (`pos_config_views.xml`) – _Create Zero-Receipt_.
 - Tax-group inherits (`account_tax_views.xml`) – RKSV tax category.
 - Certificate views and menu (`asign_views.xml`) under _Point of Sale > Configuration >

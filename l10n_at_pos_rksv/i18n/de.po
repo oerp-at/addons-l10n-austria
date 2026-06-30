@@ -419,6 +419,12 @@ msgid "RKSV Configuration"
 msgstr "RKSV Konfiguration"
 
 #. module: l10n_at_pos_rksv
+#. odoo-javascript
+#: code:addons/l10n_at_pos_rksv/static/src/overrides/order_receipt.xml:0
+msgid "Receipt No."
+msgstr "Beleg-Nr."
+
+#. module: l10n_at_pos_rksv
 #: model:ir.model.fields.selection,name:l10n_at_pos_rksv.selection__account_tax_group__asign_type__reduced1
 msgid "Reduced 1"
 msgstr "Ermäßigt 1"
