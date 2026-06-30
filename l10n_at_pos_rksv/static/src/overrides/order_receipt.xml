@@ -16,7 +16,7 @@
                 <t t-elif="order.asign_state == 's'">
                     <div
                         class="pos-receipt-amount"
-                        t-if="order.name and order.name != '/'"
+                        t-if="order.name and order.name != '/' and order.pos_reference != order.name"
                     >
                         <span>Receipt No.</span>
                         <span
@@ -24,7 +24,6 @@
                             t-esc="order.name"
                         />
                     </div>
-                    <br />
                     <br />
                     <img
                         id="asign_qrcode"
