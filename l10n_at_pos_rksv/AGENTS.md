@@ -118,6 +118,10 @@ l10n_at_pos_rksv/
   be excluded from any size-sensitive packaging step.
 - Anything sent to the A-Trust JWS endpoint requires a configured `asign.cert` with
   `cert_type='online'`, `user`, `password`.
+- Neutralized/test databases deactivate all crons (`ir.cron.active = False`), and
+  `ir.cron._trigger_list()` silently drops immediate triggers of inactive crons.
+  `test_close_session_triggers_cron` therefore re-activates `pos_config_ir_cron`
+  before asserting that closing a session creates a trigger.
 - `test_rksv_pid` deliberately provokes the per-company unique-index on
   `pos.config.asign_pid` and uses `@mute_logger("odoo.sql_db")` so the expected
   `UniqueViolation` does not leave an `ERROR` line in the log (which would otherwise
