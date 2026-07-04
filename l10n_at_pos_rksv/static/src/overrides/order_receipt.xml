@@ -14,16 +14,6 @@
                     <b>The receipt could not be signed and is therefore not valid!</b>
                 </t>
                 <t t-elif="order.asign_state == 's'">
-                    <div
-                        class="pos-receipt-amount"
-                        t-if="order.name and order.name != '/' and order.pos_reference != order.name"
-                    >
-                        <span>Receipt No.</span>
-                        <span
-                            class="pos-receipt-right-align"
-                            t-esc="order.name"
-                        />
-                    </div>
                     <br />
                     <img
                         id="asign_qrcode"
@@ -34,6 +24,8 @@
                         <t t-esc="order.config.asign_pid" />:
                         <t t-esc="order.asign_serial" />
                     </div>
+                    <div class="pos-receipt-qrcode-text">Receipt No.</div>
+                    <div class="pos-receipt-qrcode-text"><t t-esc="order.name" /></div>
                     <div
                         t-if="order.asign_type == '0'"
                         class="pos-receipt-qrcode-text"
