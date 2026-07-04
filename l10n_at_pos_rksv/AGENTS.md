@@ -44,6 +44,10 @@
   defensive guard (`AsignSequenceError`) aborts if the drawn number is not exactly
   `last signed asign_seq + 1` (tampered sequence / concurrent signer). Cancelled orders
   are never signed.
+- All `pos.order.asign_*` fields carry `copy=False` and `_prepare_refund_values` resets
+  `name`/`asign_state` – backend refunds (`refund()` uses `copy()`) must not inherit the
+  original signature; they draw their own gapless `asign_seq` and are signed as `STO`
+  when paid.
 - `pos.config._asign_create_zero_receipt()` – produces start/zero receipts required by
   the RKSV (`asign_type` `s` for the very first one, `0` afterwards).
 - `pos.config._asign_repair_signed_names()` – restores names of already signed receipts
@@ -90,6 +94,7 @@ l10n_at_pos_rksv/
 │   ├── common.py          # local TestDownload / TestAsignCommon mixins
 │   ├── test_res_config_settings.py
 │   ├── test_cancel.py     # cancelled orders, write guard, name repair (mocked)
+│   ├── test_refund.py     # backend refund flow, no copied signature data (mocked)
 │   ├── test_dep.py        # gated by `pos_config_id` config
 │   ├── test_asign_online.py # gated by `test_asign` config
 │   └── regcheck/          # Python wrapper + Java jars (tests-only)

@@ -192,6 +192,9 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
         self._create_cancelled_order(2, 39.9)
 
         cron = self.env.ref("l10n_at_pos_rksv.pos_config_ir_cron")
+        # Neutralized test databases deactivate all crons; an inactive cron
+        # silently drops immediate triggers, so activate it for this test.
+        cron.active = True
         trigger_model = self.env["ir.cron.trigger"]
         before = trigger_model.search_count([("cron_id", "=", cron.id)])
 

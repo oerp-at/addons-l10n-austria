@@ -69,6 +69,7 @@ class PosOrder(models.Model):
         string="a.sign Type",
         index=True,
         readonly=True,
+        copy=False,
     )
     asign_state = fields.Selection(
         [
@@ -83,33 +84,39 @@ class PosOrder(models.Model):
         ),
         index=True,
         readonly=True,
+        copy=False,
     )
     asign_counter = fields.Char(
         string="a.sign Counter",
         help="The turnover counter of the RKSV signature.",
         readonly=True,
+        copy=False,
     )
     asign_qrcode = fields.Char(
         string="a.sign QR-Code",
         help="The QR code of the RKSV signature.",
         index=True,
         readonly=True,
+        copy=False,
     )
     asign_dep = fields.Text(
         string="a.sign DEP",
         help="The DEP entry of the RKSV signature export.",
         readonly=True,
+        copy=False,
     )
     asign_serial = fields.Char(
         string="a.sign Serial",
         help="The serial number of the RKSV signing component.",
         readonly=True,
+        copy=False,
     )
     asign_seq = fields.Integer(
         string="a.sign Sequence",
         help="The sequence number of the RKSV signature export.",
         readonly=True,
         index=True,
+        copy=False,
     )
     asign_qrcode_quoted = fields.Char(
         string="a.sign QR-Code Quoted",
@@ -152,6 +159,21 @@ class PosOrder(models.Model):
                 return self.name or "/"
             return config.order_seq_id.get_next_char(self.asign_seq)
         return super()._compute_order_name(session)
+
+    def _prepare_refund_values(self, current_session):
+        """Make backend refunds go through the regular RKSV signing flow.
+
+        The base implementation names the refund "<original> REFUND"; with
+        RKSV enabled the refund must instead draw its own gapless receipt
+        number at signing time, so keep the placeholder name and mark the
+        order as unsigned.
+        """
+        vals = super()._prepare_refund_values(current_session)
+        config = current_session.config_id
+        if config.asign_enabled and config.asign_state != "draft":
+            vals["name"] = "/"
+            vals["asign_state"] = "u"
+        return vals
 
     def _asign_next_seq(self):
         """Assign the next gapless RKSV receipt number and the final name.
