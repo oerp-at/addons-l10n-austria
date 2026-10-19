@@ -5,3 +5,4 @@ from . import test_cancel
 from . import test_dep
 from . import test_refund
 from . import test_res_config_settings
+from . import test_receipt

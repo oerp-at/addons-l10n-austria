@@ -88,7 +88,6 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
             "fiscal_position_id": None,
             "amount_return": 0.0,
             "to_invoice": False,
-            "shipping_date": None,
             "asign_state": "u",
             "user_id": self.env.uid,
             "amount_paid": amount if with_payment else 0.0,
@@ -126,7 +125,8 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
         order = self._sync_order(seq, amount=amount, state="draft", with_payment=False)
         self.assertEqual(order.state, "draft")
         self.assertEqual(order.name, "/")
-        order.action_pos_order_cancel()
+        # Odoo 20 cancels the orders from active_ids, not self
+        order.with_context(active_ids=order.ids).action_pos_order_cancel()
         self.assertEqual(order.state, "cancel")
         self.assertEqual(order.sequence_number, seq)
         return order

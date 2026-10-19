@@ -75,7 +75,6 @@ class TestAsignRefund(TransactionCase, TestAsignCommonMixin):
             "fiscal_position_id": None,
             "amount_return": 0.0,
             "to_invoice": False,
-            "shipping_date": None,
             "asign_state": "u",
             "user_id": self.env.uid,
             "amount_paid": amount,

@@ -11,7 +11,6 @@ class ResConfigSettings(models.TransientModel):
 
     asign_state = fields.Selection(
         related="pos_config_id.asign_state",
-        compute="_compute_asign",
         readonly=True,
     )
     asign_enabled = fields.Boolean(compute="_compute_asign", inverse="_inverse_asign")

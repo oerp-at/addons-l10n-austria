@@ -7,22 +7,15 @@ from odoo import models
 class PosSession(models.Model):
     _inherit = "pos.session"
 
-    def action_pos_session_close(
-        self,
-        balancing_account=False,
-        amount_to_balance=0,
-        bank_payment_method_diffs=None,
-    ):
-        res = super().action_pos_session_close(
-            balancing_account,
-            amount_to_balance,
-            bank_payment_method_diffs,
-        )
+    def close_session_from_ui(self, payment_method_closing=None):
+        # Odoo 20 closes sessions only here, action_pos_session_close is gone
+        res = super().close_session_from_ui(payment_method_closing or {})
         # Trigger the sign-missed cron so cancelled or missed receipts are
         # signed right after closing without blocking or delaying the close.
-        if any(
-            s.config_id.asign_enabled and s.config_id.asign_state != "draft"
-            for s in self
+        if (
+            res.get("status")
+            and self.config_id.asign_enabled
+            and self.config_id.asign_state != "draft"
         ):
             self.env.ref("l10n_at_pos_rksv.pos_config_ir_cron")._trigger()
         return res

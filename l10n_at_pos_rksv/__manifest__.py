@@ -9,7 +9,7 @@
     ),
     "website": "https://github.com/OCA/l10n-austria",
     "category": "Localization/Austria",
-    "version": "19.0.1.7.0",
+    "version": "20.0.1.7.0",
     "license": "LGPL-3",
     "depends": [
         "l10n_at",
@@ -19,7 +19,6 @@
         "python": ["cryptography", "pytz", "requests"],
     },
     "data": [
-        "security/ir.model.access.csv",
         "data/asign_cron.xml",
         "views/res_config_settings_views.xml",
         "views/account_tax_views.xml",
@@ -29,6 +28,8 @@
         "views/report_certificate.xml",
         "views/report_pos_config.xml",
         "views/pos_report.xml",
+        "receipt/pos_order_receipt.xml",
+        "security/ir.access.csv",
     ],
     "assets": {
         "point_of_sale._assets_pos": [

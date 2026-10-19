@@ -1,7 +1,7 @@
 # Copyright 2024 Weboffice IT-Service und Marketing GmbH & Co KG <https://weboffice.at>
 # License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0).
 
-from odoo import api, fields, models, tools
+from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 
 
@@ -58,7 +58,7 @@ class AsignCert(models.Model):
             )
         return cert
 
-    @tools.ormcache("serial_hex")
+    @api.ormcache("serial_hex")
     def _get_login(self, serial_hex):
         cert = self._get_cert(serial_hex)
         return cert.user, cert.password

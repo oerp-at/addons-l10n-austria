@@ -18,7 +18,8 @@ patch(PosOrder.prototype, {
             this.asign_state = vals.asign_state || "u";
             this.asign_serial = vals.asign_serial || "";
             this.asign_qrcode = vals.asign_qrcode || "";
-            this.asign_type = vals.asign_type || "";
+            // Selection field: Odoo 20 rejects "" as value, empty must be false
+            this.asign_type = vals.asign_type || false;
         } else {
             this.asign_state = false;
         }

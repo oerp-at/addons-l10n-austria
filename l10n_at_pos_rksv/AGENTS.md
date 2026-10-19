@@ -62,15 +62,18 @@
 - Cron `pos_config_ir_cron` – daily run of `_cron_asign_sign_missed`; back-fills
   unsigned paid/done receipts (cancelled orders are skipped). Processes all matching POS
   regardless of session state; additionally triggered asynchronously by
-  `pos.session.action_pos_session_close()`.
+  `pos.session.close_session_from_ui()` (Odoo 20 has no `action_pos_session_close`).
 
 ## Views & Menus
 
 - POS settings inherit (`res_config_settings_views.xml`) – RKSV section.
 - POS list/form inherits (`pos_order_views.xml`) – RKSV signature fields.
-- POS receipt inherit (`static/src/overrides/order_receipt.xml`) – prints the RKSV
-  receipt number (`order.name`), the QR code, serial and STARTBELEG/NULLBELEG/STORNO
-  markers.
+- POS receipt inherit (`receipt/pos_order_receipt.xml`) – prints the RKSV receipt
+  number (`order['name']`), the QR code, serial and STARTBELEG/NULLBELEG/STORNO markers.
+  Odoo 20 renders the receipt from the server template `point_of_sale.pos_order_receipt`
+  in the backend and in the POS. Its data come from `pos.order.receipt`
+  (`receipt/pos_order_receipt.py`) and from the JS copy `GeneratePrinterData`
+  (`static/src/app/utils/printer/generate_printer_data.esm.js`); change both together.
 - POS configuration form (`pos_config_views.xml`) – _Create Zero-Receipt_.
 - Tax-group inherits (`account_tax_views.xml`) – RKSV tax category.
 - Certificate views and menu (`asign_views.xml`) under _Point of Sale > Configuration >
@@ -91,17 +94,19 @@ l10n_at_pos_rksv/
 ├── hooks.py
 ├── i18n/de.po
 ├── migrations/19.0.1.5.0/post-migration.py   # asign_seq sequence setup
+├── receipt/               # RKSV block of the server rendered receipt (Odoo 20)
 ├── models/
 │   ├── account_tax.py, asign.py, pos_config.py, pos_order.py,
 │   └── pos_session.py, res_config_settings.py
 ├── readme/                # OCA fragments (DESCRIPTION, USAGE, CONFIGURE…)
-├── security/ir.model.access.csv
-├── static/src/...         # POS frontend overrides + receipt CSS/QWeb
+├── security/ir.access.csv
+├── static/src/...         # POS order fields + GeneratePrinterData patch
 ├── tests/
 │   ├── common.py          # local TestDownload / TestAsignCommon mixins
 │   ├── test_res_config_settings.py
 │   ├── test_cancel.py     # cancelled orders, write guard, name repair (mocked)
 │   ├── test_refund.py     # backend refund flow, no copied signature data (mocked)
+│   ├── test_receipt.py    # RKSV block on the server rendered receipt (mocked)
 │   ├── test_dep.py        # gated by `pos_config_id` config
 │   ├── test_asign_online.py # gated by `test_asign` config
 │   └── regcheck/          # Python wrapper + Java jars (tests-only)

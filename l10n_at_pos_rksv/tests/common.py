@@ -74,12 +74,15 @@ class TestAsignCommonMixin:
             {"name": "Test Product", "lst_price": 0.0}
         )
 
-        self.cash_journal = (
-            self.env["account.journal"].search([("type", "=", "cash")], limit=1).copy()
+        # Odoo 20 charts no longer create a cash journal, and the payment
+        # method type is required instead of computed from the journal
+        self.cash_journal = self.env["account.journal"].create(
+            {"name": "Cash Test", "type": "cash", "code": "CSHT"}
         )
         self.cash_payment_method = self.env["pos.payment.method"].create(
             {
                 "name": "Cash Test",
+                "type": "cash",
                 "journal_id": self.cash_journal.id,
             }
         )
@@ -134,7 +137,6 @@ class TestAsignCommonMixin:
             "fiscal_position_id": None,
             "amount_return": 0.0,
             "to_invoice": False,
-            "shipping_date": None,
             "asign_state": "u",
             "asign_type": order_values["asign_type"],
             "user_id": self.env.uid,

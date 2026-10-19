@@ -401,7 +401,6 @@ class PosConfig(models.Model):
             "fiscal_position_id": None,
             "amount_return": 0.0,
             "to_invoice": False,
-            "shipping_date": None,
             "asign_state": "u",
             "asign_type": "0",
             "session_id": session.id,
