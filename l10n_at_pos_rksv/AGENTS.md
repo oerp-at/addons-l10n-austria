@@ -31,10 +31,15 @@
 - `pos.config.asign_key` – random 32-byte AES key (base64); CRC is the truncated SHA-256
   hash, also rendered on the configuration report.
 - `pos.config.asign_seq_id` – dedicated `no_gap` `ir.sequence` per POS for the RKSV
-  receipt number (`asign_seq`). Created at `action_asign_assign` (lazily via `_asign_seq`)
-  and decoupled from the order number (`sequence_number`).
-- `pos.order.asign_seq` – gapless RKSV receipt number, drawn from `asign_seq_id` only when
-  a receipt is signed (`_asign_next_seq`), so cancelled/skipped orders never create a gap.
+  receipt number (`asign_seq`). Created at `action_asign_assign` (lazily via
+  `_asign_seq`) and decoupled from the order number (`sequence_number`).
+- `pos.config._asign_order_seq()` – stamps the fiscal POS id on the **order** sequence
+  (`order_seq_id`): name, prefix `K02/` and `no_gap`. Called when the certificate is
+  assigned (`action_asign_assign`) and by the settings wizard after it wrote the POS id,
+  so every way to a fiscal id ends at the same place.
+- `pos.order.asign_seq` – gapless RKSV receipt number, drawn from `asign_seq_id` only
+  when a receipt is signed (`_asign_next_seq`), so cancelled/skipped orders never create
+  a gap.
 - `pos.order._compute_order_name()` – for RKSV the final name is built from `asign_seq`
   via `order_seq_id.get_next_char`; until signed the order keeps the `'/'` placeholder.
 - `pos.order._asign_add_signature()` – core chained signing flow; called from
@@ -52,18 +57,20 @@
   the RKSV (`asign_type` `s` for the very first one, `0` afterwards).
 - `pos.config._asign_repair_signed_names()` – restores names of already signed receipts
   whose name was reset to `'/'` by a concurrent cancel (lost-update race); the signature
-  stays valid, only the name is recomputed from `asign_seq`. Runs inside `_asign_sign_missed`.
-- Cron `pos_config_ir_cron` – daily run of `_cron_asign_sign_missed`; back-fills unsigned
-  paid/done receipts (cancelled orders are skipped). Processes all matching POS regardless
-  of session state; additionally triggered asynchronously by
+  stays valid, only the name is recomputed from `asign_seq`. Runs inside
+  `_asign_sign_missed`.
+- Cron `pos_config_ir_cron` – daily run of `_cron_asign_sign_missed`; back-fills
+  unsigned paid/done receipts (cancelled orders are skipped). Processes all matching POS
+  regardless of session state; additionally triggered asynchronously by
   `pos.session.action_pos_session_close()`.
 
 ## Views & Menus
 
 - POS settings inherit (`res_config_settings_views.xml`) – RKSV section.
 - POS list/form inherits (`pos_order_views.xml`) – RKSV signature fields.
-- POS receipt inherit (`static/src/overrides/order_receipt.xml`) – prints the RKSV receipt
-  number (`order.name`), the QR code, serial and STARTBELEG/NULLBELEG/STORNO markers.
+- POS receipt inherit (`static/src/overrides/order_receipt.xml`) – prints the RKSV
+  receipt number (`order.name`), the QR code, serial and STARTBELEG/NULLBELEG/STORNO
+  markers.
 - POS configuration form (`pos_config_views.xml`) – _Create Zero-Receipt_.
 - Tax-group inherits (`account_tax_views.xml`) – RKSV tax category.
 - Certificate views and menu (`asign_views.xml`) under _Point of Sale > Configuration >
@@ -105,11 +112,12 @@ l10n_at_pos_rksv/
 
 - License is **LGPL-3** to match the other OCA `l10n_at_*` modules.
 - In Odoo 19 every order consumes `sequence_number` at create. The RKSV receipt number
-  (`asign_seq`) is intentionally a **separate** `no_gap` sequence (`asign_seq_id`) consumed
-  only at signing, so a cancelled order – which never gets signed – leaves no gap and does
-  not need a zeroed-receipt signature. Existing installs are migrated by
-  `migrations/19.0.1.5.0/post-migration.py`, which creates the sequence and continues its
-  `number_next` after the highest already signed `asign_seq` (existing signatures are kept).
+  (`asign_seq`) is intentionally a **separate** `no_gap` sequence (`asign_seq_id`)
+  consumed only at signing, so a cancelled order – which never gets signed – leaves no
+  gap and does not need a zeroed-receipt signature. Existing installs are migrated by
+  `migrations/19.0.1.5.0/post-migration.py`, which creates the sequence and continues
+  its `number_next` after the highest already signed `asign_seq` (existing signatures
+  are kept).
 - `test_asign_online.py` and `test_dep.py` carry the `integration` / `-standard` tags
   and additionally check `config.get('test_asign')` / `config.get('pos_config_id')`.
   They are skipped in normal CI runs.
@@ -120,8 +128,15 @@ l10n_at_pos_rksv/
   `cert_type='online'`, `user`, `password`.
 - Neutralized/test databases deactivate all crons (`ir.cron.active = False`), and
   `ir.cron._trigger_list()` silently drops immediate triggers of inactive crons.
-  `test_close_session_triggers_cron` therefore re-activates `pos_config_ir_cron`
-  before asserting that closing a session creates a trigger.
+  `test_close_session_triggers_cron` therefore re-activates `pos_config_ir_cron` before
+  asserting that closing a session creates a trigger.
+- A POS created by **copying** another one is a fresh POS: `asign_state`, `asign_pid`,
+  `asign_key`, `asign_crc` and `asign_seq_id` carry `copy=False`, and the core never
+  copies its `order_seq_id` either. The copy therefore gets a new POS id from
+  `_set_asign_defaults`, but its brand-new order sequence carries **no prefix** until
+  the certificate is assigned – that is why the prefix is written in
+  `_asign_order_seq()` and not only in the settings wizard. Writing it in the wizard
+  alone let copies sign receipts without any POS id.
 - `test_rksv_pid` deliberately provokes the per-company unique-index on
   `pos.config.asign_pid` and uses `@mute_logger("odoo.sql_db")` so the expected
   `UniqueViolation` does not leave an `ERROR` line in the log (which would otherwise

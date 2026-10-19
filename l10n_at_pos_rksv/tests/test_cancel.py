@@ -9,6 +9,7 @@ import requests
 
 from odoo import fields
 from odoo.tests.common import TransactionCase
+from odoo.tools import mute_logger
 
 from .common import TestAsignCommonMixin
 
@@ -162,6 +163,10 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
         self.assertEqual(cancelled.asign_seq, 0)
         self.assertEqual(cancelled.name, "/")
 
+    # The provoked ConnectionError is logged via _logger.exception; mute it so
+    # the expected traceback does not leave an ERROR line in the log (which
+    # would otherwise break OCA's checklog-odoo CI step).
+    @mute_logger("odoo.addons.l10n_at_pos_rksv.models.pos_order")
     def test_missed_paid_order_signed_by_cron(self):
         """A paid order whose signing failed is signed gaplessly by the cron."""
         start = self._create_signed_start_order()
@@ -209,6 +214,8 @@ class TestAsignCancel(TransactionCase, TestAsignCommonMixin):
             "Closing the session must trigger the sign-missed cron",
         )
 
+    # See test_missed_paid_order_signed_by_cron for why the logger is muted.
+    @mute_logger("odoo.addons.l10n_at_pos_rksv.models.pos_order")
     def test_cron_signs_open_session(self):
         """The cron signs missed paid orders even with an opened session."""
         self._create_signed_start_order()
